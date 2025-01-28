@@ -22,6 +22,11 @@ int frameDelayCounter = 1; //frame delay for smoke animation
 int anime_time = 0;
 int attackAnimationTimer = 0;
 
+//structure for restricted areas
+struct RestrictedArea {
+    float xMin, xMax;
+    float zMin, zMax;
+};
 
 // Struct for player and enemy entities
 struct Entity {
@@ -39,6 +44,11 @@ bool gameOver = false;
 float attackRange = 2.0f;
 float enemyRespawnTime = 3.0f;
 int score = 0;
+
+//restricted areas
+std::vector<RestrictedArea> restrictedAreas = {
+    {8.0f, 20.0f, -20.0f, -9.0f},// Example: Area between (1,1) and (3,3)
+   };
 
 
 // Enemies and game settings
@@ -76,6 +86,17 @@ std::tuple<float, float, float> calculateNormal(
 
     return std::make_tuple(nx, ny, nz);
 }
+
+//function to check the player in restricted area
+bool isInRestrictedArea(float x, float z) {
+    for (const auto& area : restrictedAreas) {
+        if (x >= area.xMin && x <= area.xMax && z >= area.zMin && z <= area.zMax) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 //drawGrid
 void drawGrid()
@@ -1308,21 +1329,6 @@ void houseFoundation(float x, float y, float z) {
     glPopMatrix();
 
 }
-void drawGroundBlock(float x, float y, float z) {
-
-    float height = 0.5f;
-    float width = 10;
-    float bevel = 0.6f;
-
-    glColor3f(0.361, 0.38, 0.18); //grass green
-
-    glPushMatrix();
-    glTranslatef(x, y, z);
-
-    boxwWithBevels(height, width, bevel);
-
-    glPopMatrix();
-}
 void windowType1(float x, float y, float z) {
 
     float halfWidth = 1.5;
@@ -1439,10 +1445,25 @@ void staircase(float x, float y, float z) {
     glPopMatrix();
 
 }
+void drawGroundBlock(float x, float y, float z) {
+
+    float height = 0.5f;
+    float width = 10;
+    float bevel = 0.6f;
+
+    glColor3f(0.361, 0.38, 0.18); //grass green
+
+    glPushMatrix();
+    glTranslatef(x, y, z);
+
+    boxwWithBevels(height, width, bevel);
+    staircase(0, 0, 5.5);
+    glPopMatrix();
+}
 void house(float x, float y, float z) {
 
     glPushMatrix();
-    glTranslatef(x,y,z);
+    glTranslatef(x, y, z);
 
     houseBase();
     roofAssemble();
@@ -1488,7 +1509,7 @@ void drawTreeTop() {
 void drawTree(float x, float y, float z) {
 
     glPushMatrix();
-    glTranslatef(x,y,z);
+    glTranslatef(x, y, z);
     glScalef(2, 2, 2);
     drawTreeTrunk();
     glTranslatef(0, 1, 0);
@@ -1617,7 +1638,7 @@ void ground() {
     //glEnd();
 
     glEnable(GL_TEXTURE_2D);
-    glColor3f(1,1,1);
+    glColor3f(1, 1, 1);
     glPushMatrix();
     glBindTexture(GL_TEXTURE_2D, texture_ground[ground_animation_timer]);
 
@@ -1693,11 +1714,11 @@ void handAndLegBase() {
 }
 void drawHand() {
 
-    float armSwing = isWalking ? sin(anime_time*0.3) * 20.0f : 0.0f;
+    float armSwing = isWalking ? sin(anime_time * 0.3) * 20.0f : 0.0f;
 
     glColor3f(0.972, 0.501, 0.223);
     glPushMatrix();
-   // glScalef(1.5, 1.5, 1.5);
+    // glScalef(1.5, 1.5, 1.5);
     glRotatef(armSwing, 0, 1, 0);
     glRotatef(60, 0, 0, 1);
     handAndLegBase();
@@ -1709,8 +1730,8 @@ void drawLeg() {
     float legSwing = isWalking ? sin(anime_time * 0.3f) * 30.0f : 0.0f;
     glColor3f(0.972, 0.501, 0.223);
     glPushMatrix();
-   // glScalef(1.5, 1.5, 1.5);
-    glRotatef(legSwing,1,0,0);
+    // glScalef(1.5, 1.5, 1.5);
+    glRotatef(legSwing, 1, 0, 0);
     handAndLegBase();
     glPopMatrix();
 
@@ -1793,7 +1814,7 @@ void drawTail() {
 
     GLUquadric* quad = gluNewQuadric();
     glColor3f(0.972, 0.501, 0.223);
-    
+
     glRotatef(armSwing, 0, 1, 0);
     glTranslatef(0, 0, -0.1);
     glScalef(1, 1, 2);
@@ -1805,7 +1826,7 @@ void drawTail() {
 }
 void attackPlane(float x, float y, float z) {
 
-    
+
     glEnable(GL_TEXTURE_2D);
 
     glPushMatrix();
@@ -1823,21 +1844,21 @@ void attackPlane(float x, float y, float z) {
     glPopMatrix();
 
     glDisable(GL_TEXTURE_2D);
-   
+
 }
 
 void player() {
 
     // Update animations
-    
-    bodyBob = sin(anime_time*0.1) * 0.05f;
+
+    bodyBob = sin(anime_time * 0.1) * 0.05f;
 
     float rotationDiff = targetRotation - playerRotation;
     if (fabs(rotationDiff) > 1.0f) {
         playerRotation += rotationDiff * 0.1f;
     }
     glPushMatrix(); // whole body
-    glTranslatef(0,-0.5,0);
+    glTranslatef(0, -0.5, 0);
     glRotatef(playerRotation, 0.0f, 1.0f, 0.0f);
 
     glPushMatrix();
@@ -1862,7 +1883,7 @@ void player() {
 
     //body
     glPushMatrix();
-    glScalef(1+bodyBob,1+bodyBob,1+bodyBob);
+    glScalef(1 + bodyBob, 1 + bodyBob, 1 + bodyBob);
     glTranslatef(0, 0.27, 0);
     drawBody();
     glPopMatrix();
@@ -1890,7 +1911,7 @@ void player() {
     glTranslatef(0.1, 0.25, 0);
     drawLeg();
     glTranslatef(-0.2, 0, 0);
-    glRotatef(180,0,1,0);
+    glRotatef(180, 0, 1, 0);
     drawLeg();
     glPopMatrix();
 
@@ -1904,9 +1925,9 @@ void player() {
     if (isAttackAnimating) {
         glColor3f(1, 1, 1);
         glPushMatrix();
-        glTranslatef(0,0.5,0);
-        glRotatef(90,1,0,0);
-        attackPlane(0,0,0);
+        glTranslatef(0, 0.5, 0);
+        glRotatef(90, 1, 0, 0);
+        attackPlane(0, 0, 0);
         glPopMatrix();
     }
 
@@ -1939,22 +1960,22 @@ void displayEntities() {
 
     //draw enviroment
     glPushMatrix();
-   
+
     //trees
     glPushMatrix();
-    drawTree(5,0,-13);
+    drawTree(5, 0, -13);
 
     glPushMatrix();
-    glTranslatef(6,0,-5);
+    glTranslatef(6, 0, -5);
     glRotatef(-60, 0, 1, 0);
-    glScalef(2,2,2);
+    glScalef(2, 2, 2);
     drawTreeTrunk();
     glPopMatrix();
 
     glPopMatrix();
 
     //house
-    house(15,1,-15);
+    house(14, 1, -15);
     glPopMatrix();
 
     // Draw player
@@ -1981,7 +2002,7 @@ void display() {
     displayEntities();
     updateEnemies();
     updatePlayer();
-    
+
 
     glutSwapBuffers();
 }
@@ -2026,50 +2047,24 @@ void keyboard(unsigned char key, int x, int y) {
     float moveSpeed = 0.5f;
     isWalking = true;
 
+    float newX = playerX;
+    float newZ = playerZ;
+
     switch (key) {
     case 'w':
-
-        if (playerZ <= -20) {
-        
-            playerZ = playerZ;
-            break;
-        }
-
-        playerZ -= moveSpeed;
+        newZ -= moveSpeed;
         targetRotation = 180.0f;
         break;
     case 's':
-
-        if (playerZ >= 20) {
-
-            playerZ = playerZ;
-            break;
-        }
-
-        playerZ += moveSpeed;
+        newZ += moveSpeed;
         targetRotation = 0.0f;
         break;
     case 'a':
-
-
-        if (playerX <= -20) {
-
-            playerX = playerX;
-            break;
-        }
-
-        playerX -= moveSpeed;
+        newX -= moveSpeed;
         targetRotation = -90.0f;
         break;
     case 'd':
-
-        if (playerX >= 20) {
-
-            playerX = playerX;
-            break;
-        }
-
-        playerX += moveSpeed;
+        newX += moveSpeed;
         targetRotation = 90.0f;
         break;
     case ' ':
@@ -2082,7 +2077,16 @@ void keyboard(unsigned char key, int x, int y) {
     default:
         isWalking = false;
     }
+
+    // Restrict movement to boundaries
+    if (newX >= -20.0f && newX <= 20.0f && !isInRestrictedArea(newX, playerZ)) {
+        playerX = newX;
+    }
+    if (newZ >= -20.0f && newZ <= 20.0f && !isInRestrictedArea(playerX, newZ)) {
+        playerZ = newZ;
+    }
 }
+
 
 // Keyboard release callback to stop attack and dash
 void keyboardUp(unsigned char key, int x, int y) {
