@@ -21,6 +21,7 @@ int ground_animation_timer = 0;
 int frameDelayCounter = 1; //frame delay for smoke animation
 int anime_time = 0;
 int attackAnimationTimer = 0;
+int enemy_body_timer = 0;
 
 //structure for restricted areas
 struct RestrictedArea {
@@ -33,7 +34,8 @@ struct Entity {
     float x, y, z;
     float health;
     bool isAlive;
-    bool isRanged;
+    /*bool isRanged;*/
+    float rotation;
 };
 
 // Global variables for player
@@ -190,6 +192,7 @@ void setLightingAndShading() {
 GLuint texture_smoke[7];
 GLuint texture_attack[7];
 GLuint texture_ground[5];
+GLuint enemyBodyTex[8];
 
 // loeading textures
 void loadTexture() {
@@ -221,6 +224,16 @@ void loadTexture() {
     "textures/ground/frame0004.png"
     };
 
+    const char* enemyBodyfile[8] = {
+    "textures/enemyBody/frame0000.png",
+    "textures/enemyBody/frame0001.png",
+    "textures/enemyBody/frame0002.png",
+    "textures/enemyBody/frame0003.png",
+    "textures/enemyBody/frame0004.png",
+    "textures/enemyBody/frame0005.png",
+    "textures/enemyBody/frame0006.png",
+    "textures/enemyBody/frame0007.png",
+    };
 
     //smoke texture
     for (int i = 0; i < 7; i++) {
@@ -243,6 +256,14 @@ void loadTexture() {
             printf("Texture loading failed: %s\n", SOIL_last_result());
         }
     }
+    //enemy texture
+    for (int i = 0; i < 8; i++) {
+        enemyBodyTex[i] = SOIL_load_OGL_texture(enemyBodyfile[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS | SOIL_FLAG_INVERT_Y);
+        if (!enemyBodyTex[i]) {
+            printf("Texture loading failed: %s\n", SOIL_last_result());
+        }
+    }
+
 
 }
 
@@ -1484,8 +1505,8 @@ void house(float x, float y, float z) {
     glPopMatrix();
 }
 
-//tree
-void drawTreeTrunk() {
+//tree model 1
+void drawTreeTrunk1() {
 
     glColor3f(0.49019f, 0.36078f, 0.23921f);
     glPushMatrix();
@@ -1496,7 +1517,7 @@ void drawTreeTrunk() {
     boxwWithBevels(1, 0.125, 0.075);
     glPopMatrix();
 }
-void drawTreeTop() {
+void drawTreeTop1() {
 
     glColor3f(0.49411f, 0.5255f, 0.2235f);
 
@@ -1506,16 +1527,112 @@ void drawTreeTop() {
     truncatedPyramid(1, 0.1, 0.5);
     glPopMatrix();
 }
-void drawTree(float x, float y, float z) {
+void drawTree1(float x, float y, float z) {
 
     glPushMatrix();
     glTranslatef(x, y, z);
     glScalef(2, 2, 2);
-    drawTreeTrunk();
+    drawTreeTrunk1();
     glTranslatef(0, 1, 0);
-    drawTreeTop();
+    drawTreeTop1();
     glPopMatrix();
 }
+
+//tree model 2
+void drawTreeTrunk2() {
+    glColor3f(0.8353f, 0.8313f, 0.7647f);
+    
+    glPushMatrix();
+   
+    glPushMatrix();
+    glRotatef(-10, 0, 0, 1);
+    boxwWithBevels(0.5, 0.125, 0.075);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.125, 0.425, 0);
+    glRotatef(20, 0, 0, 1);
+    glScalef(0.75, 1, 0.75);
+    boxwWithBevels(0.5, 0.125, 0.075);
+    glPopMatrix();
+
+    glTranslatef(-0.05, 0.85, 0);
+    glRotatef(-20, 0, 0, 1);
+    glScalef(0.5, 1, 0.5);
+    boxwWithBevels(0.5, 0.125, 0.075);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.15, 0.45, 0);
+    glRotatef(-30, 0, 0, 1);
+    boxwWithBevels(0.7, 0.075, 0.035);
+    glPopMatrix();
+
+    glPopMatrix();
+}
+void drawTreeTop2() {
+
+    glColor3f(0.9255f, 0.6f, 0.3255f);
+
+    glPushMatrix();
+    GLUquadric* quad = gluNewQuadric();
+
+    glScalef(0.31, 1, 0.31);
+    gluSphere(quad, 1, 8, 8);
+    gluDeleteQuadric(quad);
+    glPopMatrix();
+}
+void drawTree2() {
+    glPushMatrix();
+    drawTreeTrunk2();
+    glTranslatef(0, 2, 0);
+    drawTreeTop2();
+    glTranslatef(0.5, -0.5, 0);
+    glScalef(0.75, 0.65, 0.75);
+    drawTreeTop2();
+    glPopMatrix();
+}
+
+//Grass
+
+// grass
+void drawBushUnit1() {
+
+    float windRotation = sin(anime_time * 0.1) * 10.0f;
+
+    glColor3f(0.3137f, 0.4117f, 0.2431f);
+
+    glPushMatrix();
+
+    glRotatef(windRotation, 0, 0, 1);
+
+    glPushMatrix();
+    truncatedPyramid(0.1, 0.2, 0.1);
+    glTranslatef(0, 0.1, 0);
+    truncatedPyramid(0.7, 0.05, 0.2);
+    glPopMatrix();
+    glPopMatrix();
+}
+void bushSet1(int rows, int cols) {
+
+    glPushMatrix();
+
+    for (int i = 0; i < cols; i++) {
+
+        glTranslatef(0, 0, 0.4);
+        glPushMatrix();
+        for (int j = 0; j < rows; j++) {
+
+            glTranslatef(0.4, 0, 0);
+            drawBushUnit1();
+
+        }
+        glPopMatrix();
+    }
+
+    glPopMatrix();
+}
+
 
 // Initialize enemies with different types and positions
 void initializeEnemies() {
@@ -1557,51 +1674,36 @@ void updateEnemies() {
     for (auto& enemy : enemies) {
         if (!enemy.isAlive) continue;
 
-        // Move enemy towards player
+        // Calculate the vector towards the player
         float dx = playerX - enemy.x;
         float dz = playerZ - enemy.z;
         float distance = std::sqrt(dx * dx + dz * dz);
 
-        // Movement towards player
+        // Calculate the angle the enemy should face
+        float targetAngle = std::atan2(dz, dx) * (180.0f / 3.14159f); // Convert to degrees
+        enemy.rotation = targetAngle; // Update enemy's rotation to face the player
+
+        // Movement towards the player
         if (distance > 0.5f) {
             enemy.x += enemySpeed * (dx / distance);
             enemy.z += enemySpeed * (dz / distance);
         }
 
-        // Enemy attack logic (ranged or melee)
-        if (enemy.isRanged && distance < 5.0f) {
-            if (rangedAttackCooldown <= 0.0f) {
-                playerHealth -= 5.0f;  // Range attack damage
-                rangedAttackCooldown = 2.0f;  // Reset cooldown
-            }
-            else {
-                rangedAttackCooldown -= 0.1f;  // Cooldown management
-            }
-        }
-        else if (distance < 1.0f) {
-            playerHealth -= 0.05f;  // Melee damage
+        if (distance < 1.0f) {
+            playerHealth -= 0.5f;
         }
 
         // Player attack: reduce enemy health if in range
         if (isAttacking && checkCollision(enemy)) {
-            enemy.health -= 10.0f;
+            enemy.health -= 5.0f;
             if (enemy.health <= 0.0f) {
                 enemy.isAlive = false;
                 score += 10; // Increment score for defeating enemy
             }
         }
-
-        // Respawn dead enemies after a delay
-        if (!enemy.isAlive) {
-            enemyRespawnTime -= 0.1f;
-            if (enemyRespawnTime <= 0.0f) {
-                enemy.isAlive = true;
-                enemy.health = 50.0f;
-                enemyRespawnTime = 3.0f;
-            }
-        }
     }
 }
+
 
 // Draw health and energy bars
 void drawHUD() {
@@ -1934,6 +2036,126 @@ void player() {
     glPopMatrix(); // whole body
 }
 
+//enemy model
+
+void drawWing() {
+
+    float wingRotation = sin(anime_time * 0.3) * 20.0f;
+
+    glPushMatrix();
+
+    glRotatef(wingRotation, 0, 0, 1);
+
+    glColor3f(0.21568, 0.41960, 0.1529);
+    glBegin(GL_QUADS);
+    glVertex3f(-0.53, 0, 0.05);
+    glVertex3f(-0.51, 0, -0.55);
+    glVertex3f(0.0, 0, -0.15);
+    glVertex3f(0.0, 0, 0.14);
+
+    glVertex3f(-0.92, 0, -0.01);
+    glVertex3f(-1.06, 0, -0.25);
+    glVertex3f(-0.51, 0, -0.55);
+    glVertex3f(-0.53, 0, 0.05);
+
+    glVertex3f(-1.32, 0, 0.25);
+    glVertex3f(-1.36, 0, 0.20);
+    glVertex3f(-1.06, 0, -0.25);
+    glVertex3f(-0.92, 0, -0.01);
+
+    glEnd();
+    glPopMatrix();
+
+}
+
+void drawHorns() {
+
+
+    float ear_heights[] = { 0.060754,0.046858, 0.061077, 0.0614 };
+    float ear_widths[] = { 0.132819,0.148319,0.140216,0.113106,0.049443 };
+
+    glColor3f(0.21568, 0.41960, 0.1529);
+    glPushMatrix();
+    glScalef(0.25, 1, 0.25);
+    for (int i = 0; i < 4; i++) {
+        if (i == 0) {
+
+            truncatedPyramid(ear_heights[i], ear_widths[i + 1], ear_widths[i]);
+            continue;
+        }
+        glTranslatef(0, ear_heights[i - 1], 0);
+        truncatedPyramid(ear_heights[i], ear_widths[i + 1], ear_widths[i]);
+
+    }
+    glPopMatrix();
+
+
+}
+
+void drawEnemyBody() {
+
+    glEnable(GL_TEXTURE_2D);
+
+
+
+    glPushMatrix();
+
+    glPushMatrix(); //left horn
+    glRotatef(30, 1, 0, 0);
+    glRotatef(30, 0, 0, 1);
+    glTranslatef(0, 0.5, 0);
+    drawHorns();
+    glPopMatrix();
+
+    glPushMatrix(); // right horn
+    glRotatef(30, 1, 0, 0);
+    glRotatef(-30, 0, 0, 1);
+    glTranslatef(0, 0.5, 0);
+    drawHorns();
+    glPopMatrix();
+
+    glColor3f(1, 1, 1);
+    glRotatef(-90, 1, 0, 0);
+
+    GLUquadric* quad = gluNewQuadric();
+    gluQuadricTexture(quad, GL_TRUE);
+    glBindTexture(GL_TEXTURE_2D, enemyBodyTex[enemy_body_timer]);
+    gluSphere(quad, 0.5f, 32, 32);
+    gluDeleteQuadric(quad);
+
+    glPopMatrix();
+
+    glDisable(GL_TEXTURE_2D);
+
+}
+
+void drawEnemy(Entity enemy) {
+
+    float bodyBob = sin(anime_time * 0.5) * 0.07f;
+    if (enemy.isAlive) {
+        glPushMatrix();
+
+        glTranslatef(0, 1 + bodyBob, 0);
+        drawEnemyBody();
+
+        glPushMatrix();
+        // Draw left wing
+        glTranslatef(-0.5, 0, 0);
+        drawWing();
+
+        // Draw right wing
+        glTranslatef(1.0, 0, 0);
+        glRotatef(180, 0, 1, 0);
+        glScalef(1, 1, -1);
+        drawWing();
+        glPopMatrix();
+
+        glPopMatrix();
+
+    }
+
+}
+
 
 // Display callback function
 void displayEntities() {
@@ -1946,15 +2168,9 @@ void displayEntities() {
 
     // Draw enemies
     for (const auto& enemy : enemies) {
-        if (enemy.isAlive) {
-            glColor3f(enemy.isRanged ? 1.0f : 0.0f, 0.0f, 1.0f);
-        }
-        else {
-            glColor3f(0.5f, 0.5f, 0.5f);
-        }
         glPushMatrix();
         glTranslatef(enemy.x, enemy.y, enemy.z);
-        glutSolidCube(1.0);// enemy model gose here
+        drawEnemy(enemy);// enemy model gose here
         glPopMatrix();
     }
 
@@ -1963,13 +2179,67 @@ void displayEntities() {
 
     //trees
     glPushMatrix();
-    drawTree(5, 0, -13);
+    drawTree1(4.5, 0, -12.5);
 
     glPushMatrix();
-    glTranslatef(6, 0, -5);
-    glRotatef(-60, 0, 1, 0);
+    glTranslatef(16.5, 0, -6.5);
+    glRotatef(-180, 0, 1, 0);
     glScalef(2, 2, 2);
-    drawTreeTrunk();
+    drawTreeTrunk1();
+    glPopMatrix();
+
+    glPushMatrix();
+    drawTree1(-19, 0, 11);
+    glPopMatrix();
+
+
+    glPushMatrix();
+    glTranslatef(17.5,0,1.5);
+    glScalef(2,2,2);
+    drawTree2();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-11.5, 0, -8.5);
+    glRotatef(60,0,1,0);
+    glScalef(2, 2, 2);
+    drawTree2();
+    glPopMatrix();
+
+    //grass
+    glPushMatrix();
+    glTranslatef(-5,0,-5);
+    bushSet1(10,10);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-5, 0, -1);
+    bushSet1(9, 2);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(2, 0, -5);
+    bushSet1(44, 10);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(11, 0, -1);
+    bushSet1(21, 2);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(14, 0, 0);
+    bushSet1(13, 2);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-20, 0, -20);
+    bushSet1(70, 15);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-20, 0, 12);
+    bushSet1(17, 19);
     glPopMatrix();
 
     glPopMatrix();
@@ -2023,7 +2293,9 @@ void timer(int) {
     if (frameDelayCounter % 8 == 0) {  // Change every second timer call
         ground_animation_timer = (ground_animation_timer + 1) % 4;
     }
-
+    if (frameDelayCounter % 8 == 0) {  // Change every second timer call
+        enemy_body_timer = (enemy_body_timer + 1) % 7;
+    }
 
     if (isAttackAnimating) {
         if (frameDelayCounter % 2 == 0) {
@@ -2074,6 +2346,9 @@ void keyboard(unsigned char key, int x, int y) {
             attack_animation_timer = 0;
         }
         break;
+    case 27:  
+        exit(0);
+        break;
     default:
         isWalking = false;
     }
@@ -2119,9 +2394,11 @@ void reshape(int w, int h) {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(800, 600);
+    //glutInitWindowSize(800, 600);
+   
     glutCreateWindow("Advanced Game Mechanics");
 
+    glutFullScreen();
     init();
     initializeEnemies();
 
