@@ -24,8 +24,6 @@ int attackAnimationTimer = 0;
 int enemy_body_timer = 0;
 int flaame_animation_timer = 0;
 
-//campFire variable
-float campX, campY, campZ;
 
 //structure for restricted areas
 struct RestrictedArea {
@@ -123,40 +121,40 @@ bool isInRestrictedArea(float x, float z) {
 }
 
 
-//set lighting
 void setLightingAndShading() {
+
     glEnable(GL_LIGHTING);
 
     GLfloat lightColor[] = { 0.9568f, 0.9137f, 0.6078f, 1.0f };
-    //GLfloat lightColor[] = { 1.0f, 0.5f, 0.0f, 0.9f };
 
-    // Light 0
+    // Light 0 (General ambient lighting)
     GLfloat l0_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
     GLfloat l0_diffuse[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    //GLfloat l0_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat l0_position[] = { -15.0f, 15.0f, 10.0f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
-    //glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular);
     glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
 
-    //flame light
+    // Flame Light (Spotlight)
     GLfloat l1_ambient[] = { 0.8196f, 0.4902f, 0.1019f, 1.0f };
     GLfloat l1_diffuse[] = { 0.8196f, 0.4902f, 0.1019f, 1.0f };
-    //GLfloat l1_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-    GLfloat l1_position[] = {campX, campY+0.5, campZ, 0.3f };
+    GLfloat l1_specular[] = { 0.8196f, 0.4902f, 0.1019f, 1.0f };
+    GLfloat l1_position[] = { 15.5, 10, 16.5, 1.0f }; // Point light source
+
+    GLfloat l1_direction[] = { 0.0f, -1.0f, 0.0f }; // Pointing downwards
+    GLfloat l1_cutoff = 20.0f;  // Cone angle (smaller = more focused)
+    GLfloat l1_exponent = 2.0f; // Intensity falls off from center
 
     glLightfv(GL_LIGHT1, GL_AMBIENT, l1_ambient);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, l1_diffuse);
- /*   glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular);*/
+    glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular);
     glLightfv(GL_LIGHT1, GL_POSITION, l1_position);
 
-    //shorting flame light
-    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.20f);
-    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.15f);
-    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.02f);
-
+    // Spotlight-specific properties
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, l1_direction);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, l1_cutoff);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, l1_exponent);
 
     // Material properties
     glEnable(GL_COLOR_MATERIAL);
@@ -170,6 +168,7 @@ void setLightingAndShading() {
 
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
+
 }
 
 //variable for load textures
@@ -1729,10 +1728,6 @@ void drawFireBase() {
 }
 void campFire(float x, float y, float z) {
 
-    campX = x;
-    campY = y;
-    campZ = z;
-
     glPushMatrix();
     glTranslatef(x,y,z);
     drawFireBase();
@@ -1740,6 +1735,74 @@ void campFire(float x, float y, float z) {
     flame();
     glPopMatrix();
 }
+
+//lamp pole
+
+void Pole() {
+
+    glColor3f(0.4078f, 0.2745f, 0.2509f);
+
+    glPushMatrix();
+    boxwWithBevels(2, 0.075, 0.035);
+
+    glPushMatrix();
+    glTranslatef(0, 1.8, 0);
+    glRotatef(180, 0, 1, 0);
+    glRotatef(90, 0, 0, 1);
+    boxwWithBevels(0.5, 0.045, 0.018);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 1.5, 0);
+    glRotatef(180, 0, 1, 0);
+    glRotatef(45, 0, 0, 1);
+    boxwWithBevels(0.5, 0.035, 0.015);
+    glPopMatrix();
+
+    glPopMatrix();
+
+}
+
+void lamp() {
+
+    float lampRotation = sin(anime_time * 0.2) * 20.0f;
+
+    glPushMatrix();
+
+    glRotatef(lampRotation, 1, 0, 0);
+    glScalef(0.5, 0.5, 0.5);
+    glTranslatef(0, -1.05, 0);
+
+    glColor3f(0.4078f, 0.3529f, 0.4196f);
+
+    glPushMatrix();
+    glTranslatef(0, 0.75, 0);
+    truncatedPyramid(0.3, 0.01, 0.01);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 0.5, 0);
+    truncatedPyramid(0.25, 0.125, 0.25);
+    glPopMatrix();
+
+    glColor4f(0.9921f, 0.7882f, 0.4196f, 0.5);
+    glPushMatrix();
+    truncatedPyramid(0.5, 0.2, 0.125);
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
+void drawLampPole() {
+
+    glPushMatrix();
+    Pole();
+    glTranslatef(0.4, 1.8, 0);
+    lamp();
+    glPopMatrix();
+
+}
+
 
 
 // Initialize enemies with different types and positions
@@ -1850,9 +1913,12 @@ void ground() {
     glEnable(GL_TEXTURE_2D);
     glColor3f(1, 1, 1);
     glPushMatrix();
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glBindTexture(GL_TEXTURE_2D, texture_ground[ground_animation_timer]);
 
     glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-20, 0.0f, -20);
     glTexCoord2f(1, 0.0f); glVertex3f(20, 0.0f, -20);
     glTexCoord2f(1, 1.0f); glVertex3f(20, 0, 20);
@@ -2056,7 +2122,6 @@ void attackPlane(float x, float y, float z) {
     glDisable(GL_TEXTURE_2D);
 
 }
-
 void player() {
 
     // Update animations
@@ -2145,7 +2210,6 @@ void player() {
 }
 
 //enemy model
-
 void drawWing() {
 
     float wingRotation = sin(anime_time * 0.3) * 20.0f;
@@ -2175,7 +2239,6 @@ void drawWing() {
     glPopMatrix();
 
 }
-
 void drawHorns() {
 
 
@@ -2199,7 +2262,6 @@ void drawHorns() {
 
 
 }
-
 void drawEnemyBody() {
 
     glEnable(GL_TEXTURE_2D);
@@ -2236,7 +2298,6 @@ void drawEnemyBody() {
     glDisable(GL_TEXTURE_2D);
 
 }
-
 void drawEnemy(Entity enemy) {
 
     float bodyBob = sin(anime_time * 0.5) * 0.07f;
@@ -2374,6 +2435,11 @@ void displayEntities() {
     bushSet1(80, 10);
     glPopMatrix();
 
+    glPushMatrix();
+    glTranslatef(12, 0, 18);
+    bushSet1(19, 5);
+    glPopMatrix();
+
     glPopMatrix();
 
     //house
@@ -2394,7 +2460,18 @@ void displayEntities() {
     campFire(16.5, 0, 15.5);
     glPopMatrix();
   
+    //lamp Pole
 
+    glPushMatrix();
+    glTranslatef(12,1,-10);//map
+    drawLampPole();
+    glPopMatrix();
+
+
+    glPushMatrix();
+    glTranslatef(1, 1, -6);//map
+    drawLampPole();
+    glPopMatrix();
 
     glPopMatrix();
 }
@@ -2407,7 +2484,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    setLightingAndShading();
+
 
     gluLookAt(playerX, playerY + 15.0f, playerZ + 15.0f, playerX, playerY, playerZ, 0.0f, 1.0f, 0.0f);
 
@@ -2417,7 +2494,7 @@ void display() {
     displayEntities();
     updateEnemies();
     updatePlayer();
-
+    setLightingAndShading();
 
     glutSwapBuffers();
 }
