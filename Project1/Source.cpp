@@ -22,6 +22,10 @@ int frameDelayCounter = 1; //frame delay for smoke animation
 int anime_time = 0;
 int attackAnimationTimer = 0;
 int enemy_body_timer = 0;
+int flaame_animation_timer = 0;
+
+//campFire variable
+float campX, campY, campZ;
 
 //structure for restricted areas
 struct RestrictedArea {
@@ -49,7 +53,26 @@ int score = 0;
 
 //restricted areas
 std::vector<RestrictedArea> restrictedAreas = {
-    {8.0f, 20.0f, -20.0f, -9.0f},// Example: Area between (1,1) and (3,3)
+    {8.0f, 20.0f, -20.0f, -9.0f},//(8,-9) and (20,-20)
+    {4.0f, 5.0f, -13.0f, -12.0f},
+    {16.0f, 17.0f, -7.0f, -6.0f},
+    {-12.0f, -11.0f, -9.0f, -8.0f},
+    {-12.0f, -11.0f, 0.0f, 1.0f},
+    {-4.0f, -3.0f, 10.0f, 11.0f},
+    {-12.0f, -11.0f, 15.0f, 16.0f},
+    {-20.0f, -19.0f, 11.0f, 12.0f},
+    {17.0f, 18.0f, 1.0f, 2.0f},
+    {16.0f, 17.0f, 15.0f, 16.0f},
+    {-7.0f, 18.0f, 3.0f, 8.0f},
+    {-6.0f, 17.0f, 2.0f, 3.0f},
+    {-2.0f, 13.0f, 1.0f, 2.0f},
+    {-5.0f, 17.0f, 8.0f, 9.0f},
+    {1.0f, 16.0f, 9.0f, 10.0f},
+    {7.0f, 13.0f, 10.0f, 11.0f},
+    {-18.0f, -10.0f, 3.0f, 9.0f},
+    {-17.0f, -10.0f, 2.0f, 3.0f},
+    {-18.0f, -12.0f, 9.0f, 9.5f},
+    {-19.0f, -18.0f, 3.5f, 8.0f},
    };
 
 
@@ -100,50 +123,6 @@ bool isInRestrictedArea(float x, float z) {
 }
 
 
-//drawGrid
-void drawGrid()
-{
-    GLfloat step = 1.0f;
-    GLint line;
-
-    glPushMatrix();
-    glTranslatef(0.0f, 1.0f, 0.0f); // Translate to the origin
-
-    glColor3f(0.7f, 0.7f, 0.7f); // Light gray color for the grid lines
-    glBegin(GL_LINES);
-    for (line = -20; line <= 20; line += step)
-    {
-        glVertex3f(line, 0.0, 20);
-        glVertex3f(line, 0.0, -20);
-
-        glVertex3f(20, 0.0, line);
-        glVertex3f(-20, 0.0, line);
-    }
-    glEnd();
-
-    // Draw measurements
-    glColor3f(1.0f, 1.0f, 1.0f); // White color for the measurements
-    for (line = -20; line <= 20; line += step)
-    {
-        glRasterPos3f(line, 0.0, 0.0);
-        char buffer[12];
-        snprintf(buffer, sizeof(buffer), "%d", line);
-        for (char* c = buffer; *c != '\0'; c++)
-        {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
-        }
-
-        glRasterPos3f(0.0, 0.0, line);
-        snprintf(buffer, sizeof(buffer), "%d", line);
-        for (char* c = buffer; *c != '\0'; c++)
-        {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
-        }
-    }
-
-    glPopMatrix();
-}
-
 //set lighting
 void setLightingAndShading() {
     glEnable(GL_LIGHTING);
@@ -154,24 +133,29 @@ void setLightingAndShading() {
     // Light 0
     GLfloat l0_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
     GLfloat l0_diffuse[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    GLfloat l0_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    //GLfloat l0_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat l0_position[] = { -15.0f, 15.0f, 10.0f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular);
+    //glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular);
     glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
 
-    // //Light 1
-    //GLfloat l1_ambient[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-    //GLfloat l1_diffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+    //flame light
+    GLfloat l1_ambient[] = { 0.8196f, 0.4902f, 0.1019f, 1.0f };
+    GLfloat l1_diffuse[] = { 0.8196f, 0.4902f, 0.1019f, 1.0f };
     //GLfloat l1_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-    //GLfloat l1_position[] = { 0.0f + playerX, 1.0f + playerZ, -0.5f, 1.0f };
+    GLfloat l1_position[] = {campX, campY+0.5, campZ, 0.3f };
 
-    //glLightfv(GL_LIGHT1, GL_AMBIENT, l1_ambient);
-    //glLightfv(GL_LIGHT1, GL_DIFFUSE, l1_diffuse);
-    //glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular);
-    //glLightfv(GL_LIGHT1, GL_POSITION, l1_position);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, l1_ambient);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, l1_diffuse);
+ /*   glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular);*/
+    glLightfv(GL_LIGHT1, GL_POSITION, l1_position);
+
+    //shorting flame light
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.20f);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.15f);
+    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.02f);
 
 
     // Material properties
@@ -185,7 +169,7 @@ void setLightingAndShading() {
     glEnable(GL_NORMALIZE);
 
     glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHT1);
 }
 
 //variable for load textures
@@ -193,6 +177,7 @@ GLuint texture_smoke[7];
 GLuint texture_attack[7];
 GLuint texture_ground[5];
 GLuint enemyBodyTex[8];
+GLuint texture_flame[4];
 
 // loeading textures
 void loadTexture() {
@@ -235,6 +220,14 @@ void loadTexture() {
     "textures/enemyBody/frame0007.png",
     };
 
+    const char* flame_file[4] = {
+    "textures/flames/frame0000.png",
+    "textures/flames/frame0001.png",
+    "textures/flames/frame0002.png",
+    "textures/flames/frame0003.png",
+    };
+
+
     //smoke texture
     for (int i = 0; i < 7; i++) {
         texture_smoke[i] = SOIL_load_OGL_texture(smoke_file[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS | SOIL_FLAG_INVERT_Y);
@@ -263,8 +256,58 @@ void loadTexture() {
             printf("Texture loading failed: %s\n", SOIL_last_result());
         }
     }
+    //flame texture
+    for (int i = 0; i < 4; i++) {
+        texture_flame[i] = SOIL_load_OGL_texture(flame_file[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS | SOIL_FLAG_INVERT_Y);
+        if (!texture_flame[i]) {
+            printf("Texture loading failed: %s\n", SOIL_last_result());
+        }
+    }
 
+}
 
+//drawGrid
+void drawGrid()
+{
+    GLfloat step = 1.0f;
+    GLint line;
+
+    glPushMatrix();
+    glTranslatef(0.0f, 1.0f, 0.0f); // Translate to the origin
+
+    glColor3f(0.7f, 0.7f, 0.7f); // Light gray color for the grid lines
+    glBegin(GL_LINES);
+    for (line = -20; line <= 20; line += step)
+    {
+        glVertex3f(line, 0.0, 20);
+        glVertex3f(line, 0.0, -20);
+
+        glVertex3f(20, 0.0, line);
+        glVertex3f(-20, 0.0, line);
+    }
+    glEnd();
+
+    // Draw measurements
+    glColor3f(1.0f, 1.0f, 1.0f); // White color for the measurements
+    for (line = -20; line <= 20; line += step)
+    {
+        glRasterPos3f(line, 0.0, 0.0);
+        char buffer[12];
+        snprintf(buffer, sizeof(buffer), "%d", line);
+        for (char* c = buffer; *c != '\0'; c++)
+        {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
+        }
+
+        glRasterPos3f(0.0, 0.0, line);
+        snprintf(buffer, sizeof(buffer), "%d", line);
+        for (char* c = buffer; *c != '\0'; c++)
+        {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
+        }
+    }
+
+    glPopMatrix();
 }
 
 //basic shapes
@@ -1593,8 +1636,6 @@ void drawTree2() {
     glPopMatrix();
 }
 
-//Grass
-
 // grass
 void drawBushUnit1() {
 
@@ -1630,6 +1671,73 @@ void bushSet1(int rows, int cols) {
         glPopMatrix();
     }
 
+    glPopMatrix();
+}
+
+//fire
+void drawFireWood() {
+
+    float baseRadius = 0.05;
+    float topRadius = 0.1;
+    float length = 0.7;
+
+    glColor3f(0.2627f, 0.2f, 0.2);
+    glPushMatrix();
+
+    GLUquadric* quad = gluNewQuadric();
+    gluCylinder(quad, baseRadius, topRadius, length, 5, 4);
+    gluDisk(quad, 0, baseRadius, 5, 32);
+    glTranslatef(0, 0, length);
+    gluDisk(quad, 0, topRadius, 5, 32);
+    glPopMatrix();
+
+}
+void flame() {
+
+
+    glEnable(GL_TEXTURE_2D);
+
+    glPushMatrix();
+
+    glTranslatef(0, 1, -1);
+
+    glBindTexture(GL_TEXTURE_2D, texture_flame[flaame_animation_timer]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+    glEnd();
+
+    glPopMatrix();
+
+
+    glDisable(GL_TEXTURE_2D);
+}
+void drawFireBase() {
+
+    int woodCount = 8;
+    float deltaAngle = 360 / woodCount;
+
+    glPushMatrix();
+
+    for (int i = 0; i < woodCount; i++) {
+        glRotatef(deltaAngle, 0, 1, 0);
+        drawFireWood();
+    }
+    glPopMatrix();
+}
+void campFire(float x, float y, float z) {
+
+    campX = x;
+    campY = y;
+    campZ = z;
+
+    glPushMatrix();
+    glTranslatef(x,y,z);
+    drawFireBase();
+    glColor3f(1,1,1);
+    flame();
     glPopMatrix();
 }
 
@@ -2159,7 +2267,9 @@ void drawEnemy(Entity enemy) {
 
 // Display callback function
 void displayEntities() {
+    
     glPushMatrix();
+
     glTranslatef(playerX, playerY, playerZ);
     drawHUD();
     glPopMatrix();
@@ -2179,6 +2289,7 @@ void displayEntities() {
 
     //trees
     glPushMatrix();
+
     drawTree1(4.5, 0, -12.5);
 
     glPushMatrix();
@@ -2189,9 +2300,18 @@ void displayEntities() {
     glPopMatrix();
 
     glPushMatrix();
-    drawTree1(-19, 0, 11);
+    glTranslatef(-11.5, 0, 15.5);
+    glScalef(2, 2, 2);
+    drawTreeTrunk1();
     glPopMatrix();
 
+    glPushMatrix();
+    drawTree1(-19.5, 0, 11.5);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawTree1(-11.5, 0, 0.5);
+    glPopMatrix();
 
     glPushMatrix();
     glTranslatef(17.5,0,1.5);
@@ -2202,6 +2322,13 @@ void displayEntities() {
     glPushMatrix();
     glTranslatef(-11.5, 0, -8.5);
     glRotatef(60,0,1,0);
+    glScalef(2, 2, 2);
+    drawTree2();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-3.5, 0, 10.5);
+    glRotatef(-180, 0, 1, 0);
     glScalef(2, 2, 2);
     drawTree2();
     glPopMatrix();
@@ -2242,6 +2369,11 @@ void displayEntities() {
     bushSet1(17, 19);
     glPopMatrix();
 
+    glPushMatrix();
+    glTranslatef(-20, 0, 16);
+    bushSet1(80, 10);
+    glPopMatrix();
+
     glPopMatrix();
 
     //house
@@ -2250,9 +2382,20 @@ void displayEntities() {
 
     // Draw player
     glPushMatrix();
+    glPushMatrix();
     glTranslatef(playerX, playerY, playerZ);
     //drawPlayer
+   
     player();
+    glPopMatrix();
+
+    //campFire
+    glPushMatrix();
+    campFire(16.5, 0, 15.5);
+    glPopMatrix();
+  
+
+
     glPopMatrix();
 }
 void display() {
@@ -2268,7 +2411,9 @@ void display() {
 
     gluLookAt(playerX, playerY + 15.0f, playerZ + 15.0f, playerX, playerY, playerZ, 0.0f, 1.0f, 0.0f);
 
-    drawGrid();
+
+
+    //drawGrid();
     displayEntities();
     updateEnemies();
     updatePlayer();
@@ -2296,7 +2441,9 @@ void timer(int) {
     if (frameDelayCounter % 8 == 0) {  // Change every second timer call
         enemy_body_timer = (enemy_body_timer + 1) % 7;
     }
-
+    if (frameDelayCounter % 4 == 0) {  // Change every second timer call
+        flaame_animation_timer = (flaame_animation_timer + 1) % 4;
+    }
     if (isAttackAnimating) {
         if (frameDelayCounter % 2 == 0) {
             attack_animation_timer++;
