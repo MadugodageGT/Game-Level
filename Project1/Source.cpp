@@ -33,6 +33,9 @@ float attackRange = 2.0f;
 float enemyRespawnTime = 3.0f;
 int score = 0;
 
+//gloable variables for menu
+bool isPaused = false;
+
 //structure for restricted areas
 struct RestrictedArea {
     float xMin, xMax;
@@ -1873,7 +1876,6 @@ void updateEnemies() {
     }
 }
 
-
 // Draw health and energy bars
 void drawHUD() {
     // Health Bar
@@ -1897,6 +1899,108 @@ void drawHUD() {
         }
     }
 }
+
+
+//MENUS
+
+//draw main menu
+void drawMainMenu() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glRasterPos2f(-0.2f, 0.2f);
+    const char* title = "My Game";
+    for (const char* c = title; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glRasterPos2f(-0.3f, 0.0f);
+    const char* startText = "Press 'S' to Start";
+    for (const char* c = startText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glRasterPos2f(-0.3f, -0.1f);
+    const char* quitText = "Press 'Q' to Quit";
+    for (const char* c = quitText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glutSwapBuffers();
+}
+
+//draw pause menu
+void drawPauseMenu() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    gluLookAt(0, 0, 2, 0, 0, 0, 0.0f, 1.0f, 0.0f);
+
+    // Draw "Start" button
+    glColor3f(0.6f, 0.3f, 0.3f); // Brown color
+    glBegin(GL_QUADS);
+    glVertex2f(-0.2f, 0.2f);
+    glVertex2f(0.2f, 0.2f);
+    glVertex2f(0.2f, 0.1f);
+    glVertex2f(-0.2f, 0.1f);
+    glEnd();
+
+    // Draw "Exit Game" button
+    glBegin(GL_QUADS);
+    glVertex2f(-0.2f, -0.1f);
+    glVertex2f(0.2f, -0.1f);
+    glVertex2f(0.2f, -0.2f);
+    glVertex2f(-0.2f, -0.2f);
+    glEnd();
+
+    // Draw text "Start" on the button
+    glColor3f(1.0f, 1.0f, 1.0f); // White color
+    glRasterPos2f(-0.05f, 0.13f); // Centered text on button
+    const char* startText = "Start";
+    for (const char* c = startText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    // Draw text "Exit Game" on the button
+    glRasterPos2f(-0.1f, -0.17f); // Centered text on button
+    const char* exitText = "Exit Game";
+    for (const char* c = exitText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glutSwapBuffers();
+}
+
+
+//game over screen
+void drawGameOverScreen() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glRasterPos2f(-0.2f, 0.2f);
+    const char* gameOverText = "Game Over!";
+    for (const char* c = gameOverText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glRasterPos2f(-0.3f, 0.0f);
+    const char* restartText = "Press 'R' to Restart";
+    for (const char* c = restartText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glRasterPos2f(-0.3f, -0.1f);
+    const char* quitText = "Press 'Q' to Quit";
+    for (const char* c = quitText; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+
+    glutSwapBuffers();
+}
+
+
 
 //gorund
 void ground() {
@@ -2497,16 +2601,21 @@ void displayEntities() {
 }
 void display() {
     if (gameOver) {
-        printf("Game Over! Player died. Final Score: %d\n", score);
+        drawGameOverScreen();
         return;
     }
 
+    if (isPaused) {
+        drawPauseMenu();
+        return;
+    }
+
+    // Normal game rendering
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
     gluLookAt(playerX, playerY + 15.0f, playerZ + 15.0f, playerX, playerY, playerZ, 0.0f, 1.0f, 0.0f);
 
-    //drawGrid();
     displayEntities();
     updateEnemies();
     updatePlayer();
@@ -2555,52 +2664,108 @@ void timer(int) {
 
 // Keyboard input for player movement, attack, and dash
 void keyboard(unsigned char key, int x, int y) {
-    if (gameOver) return;
-
-    float moveSpeed = 0.5f;
-    isWalking = true;
-
-    float newX = playerX;
-    float newZ = playerZ;
-
-    switch (key) {
-    case 'w':
-        newZ -= moveSpeed;
-        targetRotation = 180.0f;
-        break;
-    case 's':
-        newZ += moveSpeed;
-        targetRotation = 0.0f;
-        break;
-    case 'a':
-        newX -= moveSpeed;
-        targetRotation = -90.0f;
-        break;
-    case 'd':
-        newX += moveSpeed;
-        targetRotation = 90.0f;
-        break;
-    case ' ':
-        if (!isAttackAnimating) {
-            isAttacking = true;
-            isAttackAnimating = true;
-            attack_animation_timer = 0;
+    if (gameOver) {
+        switch (key) {
+        case 'r':
+            // Restart the game
+            playerHealth = 100.0f;
+            score = 0;
+            enemies.clear();
+            initializeEnemies();
+            glutDisplayFunc(display);
+            break;
+        case 'R':
+            // Restart the game
+            playerHealth = 100.0f;
+            score = 0;
+            enemies.clear();
+            initializeEnemies();
+            glutDisplayFunc(display);
+            break;
+        case 'q':
+            exit(0); // Quit the game
+            break;
+        case 'Q':
+            exit(0); // Quit the game
+            break;
         }
-        break;
-    case 27:  
-        exit(0);
-        break;
-    default:
-        isWalking = false;
     }
+    else if (isPaused) {
+        switch (key) {
+  
+        case 'P':
+            isPaused = false;
+            glutDisplayFunc(display); // Resume the game
+            break;
+        case 'p':
+            isPaused = false;
+            glutDisplayFunc(display); // Resume the game
+            break;
+        case 'q':
+            exit(0); // Quit the game
+            break;
+        case 'Q':
+            exit(0); // Quit the game
+            break;
+        }
 
-    // Restrict movement to boundaries
-    if (newX >= -20.0f && newX <= 20.0f && !isInRestrictedArea(newX, playerZ)) {
-        playerX = newX;
     }
-    if (newZ >= -20.0f && newZ <= 20.0f && !isInRestrictedArea(playerX, newZ)) {
-        playerZ = newZ;
+    else {
+
+        float moveSpeed = 0.5f;
+        isWalking = true;
+
+        float newX = playerX;
+        float newZ = playerZ;
+
+        switch (key) {
+        case 'w':
+            newZ -= moveSpeed;
+            targetRotation = 180.0f;
+            break;
+        case 's':
+            newZ += moveSpeed;
+            targetRotation = 0.0f;
+            break;
+        case 'a':
+            newX -= moveSpeed;
+            targetRotation = -90.0f;
+            break;
+        case 'd':
+            newX += moveSpeed;
+            targetRotation = 90.0f;
+            break;
+        case 'p':
+            isPaused = true;
+            glutDisplayFunc(drawPauseMenu); // pause the game
+            break;
+        case 'P':
+            isPaused = true;
+            glutDisplayFunc(drawPauseMenu); 
+            break;
+        case ' ':
+            if (!isAttackAnimating) {
+                isAttacking = true;
+                isAttackAnimating = true;
+                attack_animation_timer = 0;
+            }
+            break;
+        case 27:
+            exit(0);
+            break;
+        default:
+            isWalking = false;
+        }
+
+        // Restrict movement to boundaries
+        if (newX >= -20.0f && newX <= 20.0f && !isInRestrictedArea(newX, playerZ)) {
+            playerX = newX;
+        }
+        if (newZ >= -20.0f && newZ <= 20.0f && !isInRestrictedArea(playerX, newZ)) {
+            playerZ = newZ;
+        }
     }
+    glutPostRedisplay();
 }
 
 
@@ -2635,15 +2800,15 @@ void reshape(int w, int h) {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    //glutInitWindowSize(800, 600);
-   
     glutCreateWindow("Game Window");
 
     glutFullScreen();
     init();
     initializeEnemies();
 
+    // Start with the main menu
     glutDisplayFunc(display);
+
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
