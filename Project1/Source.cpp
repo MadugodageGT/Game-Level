@@ -24,6 +24,14 @@ int attackAnimationTimer = 0;
 int enemy_body_timer = 0;
 int flaame_animation_timer = 0;
 
+// Global variables for player
+float playerX = 0.0f, playerY = 0.5f, playerZ = 0.0f;
+float playerHealth = 100.0f;
+bool isAttacking = false;
+bool gameOver = false;
+float attackRange = 2.0f;
+float enemyRespawnTime = 3.0f;
+int score = 0;
 
 //structure for restricted areas
 struct RestrictedArea {
@@ -39,15 +47,6 @@ struct Entity {
     /*bool isRanged;*/
     float rotation;
 };
-
-// Global variables for player
-float playerX = 0.0f, playerY = 0.5f, playerZ = 0.0f;
-float playerHealth = 100.0f;
-bool isAttacking = false;
-bool gameOver = false;
-float attackRange = 2.0f;
-float enemyRespawnTime = 3.0f;
-int score = 0;
 
 //restricted areas
 std::vector<RestrictedArea> restrictedAreas = {
@@ -82,6 +81,7 @@ float rangedAttackCooldown = 2.0f;
 
 //save normals
 std::tuple<float, float, float> normal;
+
 
 //function for calculate normals
 std::tuple<float, float, float> calculateNormal(
@@ -1737,7 +1737,6 @@ void campFire(float x, float y, float z) {
 }
 
 //lamp pole
-
 void Pole() {
 
     glColor3f(0.4078f, 0.2745f, 0.2509f);
@@ -1762,7 +1761,6 @@ void Pole() {
     glPopMatrix();
 
 }
-
 void lamp() {
 
     float lampRotation = sin(anime_time * 0.2) * 20.0f;
@@ -1792,7 +1790,6 @@ void lamp() {
 
     glPopMatrix();
 }
-
 void drawLampPole() {
 
     glPushMatrix();
@@ -1802,7 +1799,6 @@ void drawLampPole() {
     glPopMatrix();
 
 }
-
 
 
 // Initialize enemies with different types and positions
@@ -1848,6 +1844,8 @@ void updateEnemies() {
         // Calculate the vector towards the player
         float dx = playerX - enemy.x;
         float dz = playerZ - enemy.z;
+        //float dx = 0;
+        //float dz = 0;
         float distance = std::sqrt(dx * dx + dz * dz);
 
         // Calculate the angle the enemy should face
@@ -2460,16 +2458,38 @@ void displayEntities() {
     campFire(16.5, 0, 15.5);
     glPopMatrix();
   
-    //lamp Pole
-
+    //lamp Poles
     glPushMatrix();
-    glTranslatef(12,1,-10);//map
+    glTranslatef(12,1,-10);
     drawLampPole();
     glPopMatrix();
 
+    glPushMatrix();
+    glTranslatef(-6, 1, 1);
+    glRotatef(180, 0, 1, 0);
+    drawLampPole();
+    glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(1, 1, -6);//map
+    glTranslatef(-11, 1, 10);
+    drawLampPole();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-6, 1, 13.5);
+    glRotatef(-120, 0, 1, 0);
+    drawLampPole();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(6, 1, 17);
+    glRotatef(90, 0, 1, 0);
+    drawLampPole();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 1, -11);
+    glRotatef(-90, 0, 1, 0);
     drawLampPole();
     glPopMatrix();
 
@@ -2484,11 +2504,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-
-
     gluLookAt(playerX, playerY + 15.0f, playerZ + 15.0f, playerX, playerY, playerZ, 0.0f, 1.0f, 0.0f);
-
-
 
     //drawGrid();
     displayEntities();
@@ -2498,6 +2514,7 @@ void display() {
 
     glutSwapBuffers();
 }
+
 
 // Timer function 
 void timer(int) {
@@ -2620,7 +2637,7 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     //glutInitWindowSize(800, 600);
    
-    glutCreateWindow("Advanced Game Mechanics");
+    glutCreateWindow("Game Window");
 
     glutFullScreen();
     init();
