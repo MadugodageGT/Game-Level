@@ -2893,7 +2893,8 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutCreateWindow("Game Window");
 
-    glutFullScreen();
+    glutInitWindowSize(800, 800);
+    //glutFullScreen();
     init();
     initializeEnemies();
 
