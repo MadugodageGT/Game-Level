@@ -123,7 +123,7 @@ bool isInRestrictedArea(float x, float z) {
     return false;
 }
 
-
+//setting up lightings
 void setLightingAndShading() {
 
     glEnable(GL_LIGHTING);
@@ -180,6 +180,7 @@ GLuint texture_attack[7];
 GLuint texture_ground[5];
 GLuint enemyBodyTex[8];
 GLuint texture_flame[4];
+GLuint texture_menu[2];
 
 // loeading textures
 void loadTexture() {
@@ -229,6 +230,11 @@ void loadTexture() {
     "textures/flames/frame0003.png",
     };
 
+    const char* menu_file[4] = {
+    "textures/menu/continue.png",
+    "textures/menu/Quit.png",
+    };
+
 
     //smoke texture
     for (int i = 0; i < 7; i++) {
@@ -265,10 +271,18 @@ void loadTexture() {
             printf("Texture loading failed: %s\n", SOIL_last_result());
         }
     }
+    //menu
+        //flame texture
+    for (int i = 0; i < 2; i++) {
+        texture_menu[i] = SOIL_load_OGL_texture(menu_file[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS | SOIL_FLAG_INVERT_Y);
+        if (!texture_menu[i]) {
+            printf("Texture loading failed: %s\n", SOIL_last_result());
+        }
+    }
 
 }
 
-//drawGrid
+//drawGrid 3D
 void drawGrid()
 {
     GLfloat step = 1.0f;
@@ -311,6 +325,55 @@ void drawGrid()
 
     glPopMatrix();
 }
+
+//drawGrid 2D
+void drawGrid2d()
+{
+    GLfloat step = 1.0f;
+    GLint line;
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 0.0f); // Translate to the origin
+
+    glColor3f(0.7f, 0.7f, 0.7f); // Light gray color for the grid lines
+    glBegin(GL_LINES);
+    for (line = -5; line <= 5; line += step)
+    {
+        // Draw vertical lines (parallel to Y-axis)
+        glVertex2f(line, -20);
+        glVertex2f(line, 20);
+
+        // Draw horizontal lines (parallel to X-axis)
+        glVertex2f(-20, line);
+        glVertex2f(20, line);
+    }
+    glEnd();
+
+    // Draw measurements
+    glColor3f(1.0f, 1.0f, 1.0f); // White color for the measurements
+    for (line = -20; line <= 20; line += step)
+    {
+        // Draw X-axis measurements
+        glRasterPos2f(line, 0.0);
+        char buffer[12];
+        snprintf(buffer, sizeof(buffer), "%d", line);
+        for (char* c = buffer; *c != '\0'; c++)
+        {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
+        }
+
+        // Draw Y-axis measurements
+        glRasterPos3f(0.0, line, 0.0);
+        snprintf(buffer, sizeof(buffer), "%d", line);
+        for (char* c = buffer; *c != '\0'; c++)
+        {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
+        }
+    }
+
+    glPopMatrix();
+}
+
 
 //basic shapes
 void truncatedPyramid(float height, float half_top_width, float half_bottom_width) {
@@ -1930,47 +1993,6 @@ void drawMainMenu() {
     glutSwapBuffers();
 }
 
-//draw pause menu
-void drawPauseMenu() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-
-    gluLookAt(0, 0, 2, 0, 0, 0, 0.0f, 1.0f, 0.0f);
-
-    // Draw "Start" button
-    glColor3f(0.6f, 0.3f, 0.3f); // Brown color
-    glBegin(GL_QUADS);
-    glVertex2f(-0.2f, 0.2f);
-    glVertex2f(0.2f, 0.2f);
-    glVertex2f(0.2f, 0.1f);
-    glVertex2f(-0.2f, 0.1f);
-    glEnd();
-
-    // Draw "Exit Game" button
-    glBegin(GL_QUADS);
-    glVertex2f(-0.2f, -0.1f);
-    glVertex2f(0.2f, -0.1f);
-    glVertex2f(0.2f, -0.2f);
-    glVertex2f(-0.2f, -0.2f);
-    glEnd();
-
-    // Draw text "Start" on the button
-    glColor3f(1.0f, 1.0f, 1.0f); // White color
-    glRasterPos2f(-0.05f, 0.13f); // Centered text on button
-    const char* startText = "Start";
-    for (const char* c = startText; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-    }
-
-    // Draw text "Exit Game" on the button
-    glRasterPos2f(-0.1f, -0.17f); // Centered text on button
-    const char* exitText = "Exit Game";
-    for (const char* c = exitText; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-    }
-
-    glutSwapBuffers();
-}
 
 
 //game over screen
@@ -2599,23 +2621,92 @@ void displayEntities() {
 
     glPopMatrix();
 }
+
+
+
+//draw pause menu
+void drawPauseMenu() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+
+    // Set up orthographic projection matrix
+    glOrtho(-5.0f, 5.0f, -5.0f, 5.0f, 0.0f, 10.0f);
+
+    glEnable(GL_TEXTURE_2D);
+    // Draw "Start" button
+    glPushMatrix();
+    glColor3f(1,1,1); 
+    glTranslatef(-2.5, 1.0, 0);
+    glBindTexture(GL_TEXTURE_2D, texture_menu[0]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 1.0f); glVertex2f(-1.0f, 0.5f);
+    glTexCoord2f(0, 0.0f); glVertex2f(-1.0f, -0.5f);
+    glTexCoord2f(1, 0.0f); glVertex2f(1.0f, -0.5f);
+    glTexCoord2f(1, 1.0f); glVertex2f(1.0f, 0.5f);
+    glEnd();
+
+    glPopMatrix();
+
+    // Draw "Exit Game" button
+    glPushMatrix();
+    glColor3f(1, 1, 1);
+    glTranslatef(-2.5, -0.5, 0);
+    glBindTexture(GL_TEXTURE_2D, texture_menu[1]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 1.0f); glVertex2f(-1.0f, 0.5f);
+    glTexCoord2f(0, 0.0f); glVertex2f(-1.0f, -0.5f);
+    glTexCoord2f(1, 0.0f); glVertex2f(1.0f, -0.5f);
+    glTexCoord2f(1, 1.0f); glVertex2f(1.0f, 0.5f);
+    glEnd();
+
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+    //player
+    glPushMatrix();
+    glTranslatef(1.5, -1.0, 5);
+    glRotatef(anime_time, 0, 1, 0);
+    glScalef(2,2,2);
+    player();
+    glPopMatrix();
+
+    //lamp
+    glPushMatrix();
+    glTranslatef(3, -2.0, 5);
+    glRotatef(60, 0, 1, 0);
+    glScalef(2, 2, 2);
+    drawLampPole();
+    glPopMatrix();
+
+    //helth
+
+    glPushMatrix();
+    glTranslatef(4.5, 1.5, 5.0);
+    drawHUD();
+    glPopMatrix();
+
+
+    glutSwapBuffers();
+}
+
+//main display
 void display() {
     if (gameOver) {
         drawGameOverScreen();
         return;
     }
 
-    if (isPaused) {
-        drawPauseMenu();
-        return;
-    }
+    //if (isPaused) {
+    //    drawPauseMenu();
+    //    return;
+    //}
+    
 
     // Normal game rendering
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
     gluLookAt(playerX, playerY + 15.0f, playerZ + 15.0f, playerX, playerY, playerZ, 0.0f, 1.0f, 0.0f);
-
     displayEntities();
     updateEnemies();
     updatePlayer();
